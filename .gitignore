@@ -1,0 +1,20 @@
+# Terraform: el estado vive en S3, NUNCA en el repo
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Llaves
+*.pem
+id_*
+*.zip
+.DS_Store
