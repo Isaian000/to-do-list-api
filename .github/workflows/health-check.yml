@@ -1,0 +1,53 @@
+name: Health check
+
+on:
+  workflow_run:
+    workflows: ["Deploy (Continuous Deployment)"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      requests:
+        description: "Cuántas peticiones a /health hacer (genera datos para las métricas)"
+        default: "10"
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  INSTANCE_NAME: todo-api
+  APP_PORT: "8000"
+
+jobs:
+  health:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Obtener IP pública de la EC2
+        run: |
+          IP=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=${INSTANCE_NAME}" "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].PublicIpAddress" --output text)
+          if [ -z "$IP" ] || [ "$IP" = "None" ]; then echo "No hay instancia corriendo"; exit 1; fi
+          echo "EC2_IP=$IP" >> "$GITHUB_ENV"
+
+      - name: Revisar /health, /version y /tasks
+        run: |
+          N="${{ inputs.requests || '3' }}"
+          FAILS=0
+          for i in $(seq 1 "$N"); do
+            CODE=$(curl -s -o body.json -w "%{http_code}" "http://$EC2_IP:$APP_PORT/health" || echo 000)
+            echo "[$i] HTTP $CODE $(cat body.json 2>/dev/null)"
+            [ "$CODE" = "200" ] || FAILS=$((FAILS+1))
+            sleep 2
+          done
+          curl -fsS "http://$EC2_IP:$APP_PORT/version"; echo
+          curl -fsS "http://$EC2_IP:$APP_PORT/tasks" | head -c 500; echo
+          if [ "$FAILS" -gt 0 ]; then echo "$FAILS health checks fallaron"; exit 1; fi

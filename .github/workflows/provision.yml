@@ -1,0 +1,46 @@
+name: Provision (Terraform apply)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  TF_VAR_repo_url: https://github.com/${{ github.repository }}.git
+  TF_VAR_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+  TF_VAR_alert_email: ${{ vars.ALERT_EMAIL }}
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: terraform init (backend remoto S3)
+        run: terraform init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+
+      - name: terraform apply
+        run: terraform apply -auto-approve -input=false
+
+      - name: Outputs
+        run: terraform output
