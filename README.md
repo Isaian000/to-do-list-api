@@ -86,3 +86,4 @@ pytest -v
 DATABASE_URL=sqlite:///local.db uvicorn main:app --app-dir src --reload
 ```
 
+
