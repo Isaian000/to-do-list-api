@@ -34,7 +34,7 @@ def app_version() -> str:
 
 
 def db_error(operation: str, exc: Exception) -> HTTPException:
-    """Registra el error de RDS como métrica y devuelve un 503."""
+    """Registra el error de RDS como metrica y devuelve un 503."""
     logger.error("Error de base de datos en %s: %s", operation, exc)
     metrics.put_metric(metrics.DATABASE_ERRORS)
     return HTTPException(

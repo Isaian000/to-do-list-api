@@ -1,4 +1,4 @@
-"""Métricas personalizadas en CloudWatch con put_metric_data (boto3).
+"""Metricas personalizadas en CloudWatch con put_metric_data (boto3).
 
 Solo se publican si METRICS_ENABLED=true (en la EC2). En pruebas y en local
 quedan desactivadas para no requerir credenciales de AWS.
@@ -49,5 +49,5 @@ def put_metric(name: str, value: float = 1.0, unit: str = "Count") -> None:
                 }
             ],
         )
-    except Exception:  # nunca tumbar la petición por una métrica
-        logger.exception("No se pudo publicar la métrica %s", name)
+    except Exception:  # nunca tumbar la petición por una metrica
+        logger.exception("No se pudo publicar la metrica %s", name)

@@ -1,6 +1,6 @@
 """Acceso a datos: tareas persistidas en RDS (MySQL).
 
-Las credenciales se leen en tiempo de ejecución desde AWS Secrets Manager
+Las credenciales se leen en tiempo de ejecucion desde AWS Secrets Manager
 (variable DB_SECRET_NAME). Para pruebas locales se puede usar DATABASE_URL
 (por ejemplo sqlite://).
 """
@@ -68,8 +68,8 @@ class Database:
 
     @property
     def engine(self):
-        # Se crea de forma perezosa: si RDS o el secret no están listos,
-        # se reintenta en la siguiente petición.
+        # si RDS o el secret no estan listos,
+        # se reintenta en la siguiente peticion.
         if self._engine is None:
             url = self._resolve_url()
             if url.startswith("sqlite"):
