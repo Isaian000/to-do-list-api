@@ -1,0 +1,44 @@
+[
+  {
+    "name": "todo-api-ec2-high-cpu",
+    "description": "CPU de la EC2 > 80% sostenido 15 min. Accion: revisar trafico/procesos; escalar el tipo de instancia si es carga legitima.",
+    "namespace": "AWS/EC2",
+    "metric_name": "CPUUtilization",
+    "statistic": "Average",
+    "period": 300,
+    "evaluation_periods": 3,
+    "datapoints_to_alarm": 3,
+    "threshold": 80,
+    "comparison_operator": "GreaterThanThreshold",
+    "treat_missing_data": "missing",
+    "dimensions": [{ "name": "InstanceId", "value": "INSTANCE_ID" }]
+  },
+  {
+    "name": "todo-api-database-errors",
+    "description": "Errores leyendo/escribiendo en RDS en 2 de los ultimos 3 minutos. Accion: revisar estado de RDS (detenida, sin conexiones, credenciales) y logs de la app.",
+    "namespace": "TodoApi",
+    "metric_name": "DatabaseErrors",
+    "statistic": "Sum",
+    "period": 60,
+    "evaluation_periods": 3,
+    "datapoints_to_alarm": 2,
+    "threshold": 1,
+    "comparison_operator": "GreaterThanOrEqualToThreshold",
+    "treat_missing_data": "notBreaching",
+    "dimensions": [{ "name": "Service", "value": "todo-api" }]
+  },
+  {
+    "name": "todo-api-tasks-created-spike",
+    "description": "20 o mas tareas creadas en 5 minutos: uso anormal (spam/bot o script fuera de control). Accion: revisar origen de las peticiones y considerar rate limiting.",
+    "namespace": "TodoApi",
+    "metric_name": "TasksCreated",
+    "statistic": "Sum",
+    "period": 300,
+    "evaluation_periods": 1,
+    "datapoints_to_alarm": 1,
+    "threshold": 20,
+    "comparison_operator": "GreaterThanOrEqualToThreshold",
+    "treat_missing_data": "notBreaching",
+    "dimensions": [{ "name": "Service", "value": "todo-api" }]
+  }
+]

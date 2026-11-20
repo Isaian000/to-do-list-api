@@ -1,0 +1,53 @@
+{
+  "widgets": [
+    {
+      "type": "text",
+      "x": 0, "y": 0, "width": 24, "height": 2,
+      "properties": {
+        "markdown": "# to-do-list-api\nCPU de la EC2 (nativa), errores de RDS y tareas creadas (instrumentadas con put_metric_data)."
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0, "y": 2, "width": 8, "height": 6,
+      "properties": {
+        "title": "EC2 CPUUtilization (%)",
+        "region": "REGION",
+        "view": "timeSeries",
+        "stat": "Average",
+        "period": 300,
+        "metrics": [["AWS/EC2", "CPUUtilization", "InstanceId", "INSTANCE_ID"]],
+        "annotations": { "horizontal": [{ "label": "Alarma 80%", "value": 80 }] },
+        "yAxis": { "left": { "min": 0, "max": 100 } }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 8, "y": 2, "width": 8, "height": 6,
+      "properties": {
+        "title": "Errores de RDS (DatabaseErrors)",
+        "region": "REGION",
+        "view": "timeSeries",
+        "stat": "Sum",
+        "period": 60,
+        "metrics": [["TodoApi", "DatabaseErrors", "Service", "todo-api"]],
+        "annotations": { "horizontal": [{ "label": "Alarma >= 1", "value": 1 }] },
+        "yAxis": { "left": { "min": 0 } }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 16, "y": 2, "width": 8, "height": 6,
+      "properties": {
+        "title": "Tareas creadas (TasksCreated)",
+        "region": "REGION",
+        "view": "timeSeries",
+        "stat": "Sum",
+        "period": 300,
+        "metrics": [["TodoApi", "TasksCreated", "Service", "todo-api"]],
+        "annotations": { "horizontal": [{ "label": "Alarma >= 20 / 5 min", "value": 20 }] },
+        "yAxis": { "left": { "min": 0 } }
+      }
+    }
+  ]
+}
