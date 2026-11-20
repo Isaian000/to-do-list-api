@@ -1,0 +1,4 @@
+# Copia este archivo a terraform.tfvars (está en .gitignore) y llénalo.
+repo_url    = "https://github.com/TU_USUARIO/to-do-list-api.git"
+public_key  = "ssh-ed25519 AAAA... (contenido de ~/.ssh/todo-api.pub)"
+alert_email = "tu-correo@ejemplo.com"
