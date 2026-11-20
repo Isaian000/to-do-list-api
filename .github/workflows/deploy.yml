@@ -1,0 +1,68 @@
+name: Deploy (Continuous Deployment)
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Etiqueta del release a desplegar (ej. v1.0.0)"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  INSTANCE_NAME: todo-api
+  APP_PORT: "8000"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determinar versión
+        run: echo "TAG=${{ github.event.release.tag_name || inputs.tag }}" >> "$GITHUB_ENV"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Obtener IP pública de la EC2
+        run: |
+          IP=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=${INSTANCE_NAME}" "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].PublicIpAddress" --output text)
+          if [ -z "$IP" ] || [ "$IP" = "None" ]; then echo "No hay instancia '${INSTANCE_NAME}' corriendo"; exit 1; fi
+          echo "EC2_IP=$IP" >> "$GITHUB_ENV"
+          echo "EC2: $IP"
+
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/todo-api
+          chmod 600 ~/.ssh/todo-api
+
+      - name: Descargar el artefacto en la EC2 y reiniciar el servidor
+        run: |
+          ssh -i ~/.ssh/todo-api -o StrictHostKeyChecking=no -o ConnectTimeout=20 \
+            ec2-user@"$EC2_IP" "bash -s $TAG ${{ github.repository }} $APP_PORT" < scripts/deploy_remote.sh
+
+      - name: Verificar /version
+        run: |
+          for i in $(seq 1 20); do
+            V=$(curl -fsS "http://$EC2_IP:$APP_PORT/version" | jq -r .version || true)
+            echo "intento $i: version=$V"
+            if [ "$V" = "$TAG" ]; then echo "Deploy de $TAG verificado"; exit 0; fi
+            sleep 5
+          done
+          echo "La versión desplegada no coincide con $TAG"; exit 1
